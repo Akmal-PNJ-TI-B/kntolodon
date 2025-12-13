@@ -22,7 +22,15 @@ Use this agent when you need to tag specific lines of code across multiple files
     * You must strictly adhere to the following JSON structure:
         * `files`: Array of objects.
         * `path`: String. **Must be a relative path** from the project root (e.g., `view/startpage.php`).
-        * `bookmarks`: Array of objects containing `line` (int), `column` (int), and `label` (string).
+        * `bookmarks`: Array of objects containing `line` (int), `column` (int), and `label` (string). and do not add or include any other properties.
+    * Example bookmark entry:
+        ```json
+        {
+            "line": 42,
+            "column": 10,
+            "label": "Initialize Variables"
+        }
+        ```
 
 3.  **Duplicate Prevention (Critical):**
     * **Do not create duplicate bookmarks** on the same line number for the same file.
