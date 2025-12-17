@@ -1,9 +1,133 @@
 /**
- * Laporan.js - Handle tab switching, filters, dan download untuk halaman laporan
- * Menggunakan window.ASSET_BASE_PATH yang di-expose dari view
+ * ============================================================================
+ * LAPORAN.JS - Reports Page Scripts
+ * ============================================================================
+ * 
+ * Module untuk menangani reports page dengan multiple period tabs:
+ * - Tab switching (Harian, Mingguan, Bulanan, Tahunan)
+ * - Filter inputs untuk each period type
+ * - Download/export functionality
+ * - NO inline scripts - pure event delegation
+ * 
+ * FUNGSI UTAMA:
+ * 1. TAB SWITCHING
+ *    - showTab(tabName): Show selected tab content
+ *    - gantiTabLaporan(tabName): Switch tabs dengan button style updates
+ *    - URL-based tab restoration on page load
+ * 
+ * 2. FILTER MANAGEMENT
+ *    - setupFilterListeners(): Attach change handlers to filter inputs
+ *    - applyFilter(tab, params): Apply filters dan reload with query params
+ *    - Different filters per tab type:
+ *      a. Harian: Tanggal (date picker)
+ *      b. Mingguan: Tanggal (week start date)
+ *      c. Bulanan: Bulan (select) + Tahun (select)
+ *      d. Tahunan: Tahun (select)
+ * 
+ * 3. DOWNLOAD FUNCTIONALITY
+ *    - downloadLaporan(periode): Trigger download/export
+ *    - Redirects to export endpoint dengan filter params
+ *    - Supports multiple formats (PDF, Excel - if implemented)
+ * 
+ * 4. EVENT DELEGATION
+ *    - [data-laporan-tab]: Tab switching buttons
+ *    - [data-download-laporan]: Download buttons
+ *    - Filter inputs: change event listeners
+ * 
+ * TAB STRUCTURE:
+ * - harian: Daily reports (filter by single date)
+ * - mingguan: Weekly reports (filter by week start date)
+ * - bulanan: Monthly reports (filter by month + year)
+ * - tahunan: Yearly reports (filter by year)
+ * 
+ * TARGET ELEMENTS (TABS):
+ * - [data-laporan-tab]: Tab button elements
+ * - [data-tab-name]: Tab name attribute
+ * - .tab-content: Tab content containers
+ * - #content-{tabName}: Specific tab content
+ * 
+ * TARGET ELEMENTS (FILTERS):
+ * - #filter-tanggal: Daily date picker
+ * - #filter-tanggal-mingguan: Weekly date picker
+ * - #filter-bulan: Monthly month select
+ * - #filter-tahun-bulanan: Monthly year select
+ * - #filter-tahun-tahunan: Yearly year select
+ * 
+ * TARGET ELEMENTS (DOWNLOAD):
+ * - [data-download-laporan]: Download button
+ * - [data-periode]: Period type (harian, mingguan, bulanan, tahunan)
+ * 
+ * FILTER APPLICATION:
+ * - Constructs URL dengan filter query params
+ * - window.location.href untuk page reload dengan filters
+ * - Server-side filtering via LaporanModel methods
+ * 
+ * URL PARAMETER PATTERN:
+ * - ?page=admin&action=laporan&tab={tabName}&{filterParams}
+ * - Example: ?page=admin&action=laporan&tab=bulanan&bulan=12&tahun=2024
+ * 
+ * DATA ATTRIBUTES:
+ * - data-base-path: Base path untuk asset URLs (from #laporan-data)
+ * - data-tab-name: Tab identifier (harian, mingguan, bulanan, tahunan)
+ * - data-periode: Period type untuk download
+ * 
+ * REPORT CONTENT:
+ * - Most Booked Rooms: Top 5 rooms by booking count
+ * - Least Booked Rooms: Bottom 5 rooms by booking count
+ * - User Statistics: Total, active, suspended users
+ * - Booking Statistics: Total bookings by status (AKTIF, SELESAI, DIBATALKAN, HANGUS)
+ * - Filtered by selected period dan date range
+ * 
+ * DOWNLOAD FUNCTIONALITY:
+ * - Server generates report file (PDF/Excel)
+ * - Browser triggers download via redirect
+ * - Filename includes period dan date range
+ * 
+ * CSS CLASSES:
+ * - active: Active tab styling
+ * - tab-content: Tab content container
+ * - hidden: Display none
+ * 
+ * FORM SUBMISSIONS:
+ * - No forms - all filtering via URL params
+ * - Filter changes trigger page reload with new params
+ * - Server-side data fetching dan rendering
+ * 
+ * USAGE:
+ * - Included in: view/admin/laporan.php
+ * - Access: Admin and Super Admin
+ * - Initializes on DOM ready
+ * 
+ * INTEGRATION:
+ * - Server: AdminController::laporan()
+ * - Database: booking, ruangan, akun tables
+ * - Model: LaporanModel (statistical queries)
+ * 
+ * @module laporan
+ * @version 1.0
+ * @author PBL-Perpustakaan Team
  */
 
+// ==================== DATA INITIALIZATION ====================
+
+/**
+ * Global asset base path
+ * @type {string}
+ */
+let ASSET_BASE_PATH = '';
+
+/**
+ * Initialize data from data attributes
+ * Reads ASSET_BASE_PATH dari #laporan-data div
+ */
 document.addEventListener('DOMContentLoaded', function() {
+    // Get base path from data attribute  
+    const dataContainer = document.getElementById('laporan-data');
+    if (dataContainer) {
+        ASSET_BASE_PATH = dataContainer.dataset.basePath || '';
+        window.ASSET_BASE_PATH = ASSET_BASE_PATH;
+    }
+    
     initLaporanPage();
 });
 
@@ -21,20 +145,24 @@ function initLaporanPage() {
     // Setup event listeners untuk filter inputs
     setupFilterListeners();
     
-    // Setup event listeners untuk tab buttons
-    document.querySelectorAll('[data-laporan-tab]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const tabName = this.getAttribute('data-tab-name');
+    // Setup event delegation for all tab buttons (with onclick attributes)
+    // This allows existing onclick to work OR data attributes
+    document.addEventListener('click', function(event) {
+        // Tab switching buttons
+        if (event.target.closest('[data-laporan-tab]')) {
+            const btn = event.target.closest('[data-laporan-tab]');
+            const tabName = btn.getAttribute('data-tab-name');
             gantiTabLaporan(tabName);
-        });
-    });
-    
-    // Setup event listeners untuk download buttons
-    document.querySelectorAll('[data-download-laporan]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const periode = this.getAttribute('data-periode');
+            event.preventDefault();
+        }
+        
+        // Download buttons
+        if (event.target.closest('[data-download-laporan]')) {
+            const btn = event.target.closest('[data-download-laporan]');
+            const periode = btn.getAttribute('data-periode');
             downloadLaporan(periode);
-        });
+            event.preventDefault();
+        }
     });
 }
 
@@ -162,7 +290,8 @@ function showTab(tab) {
 }
 
 /**
- * Download laporan (placeholder - akan dikembangkan lebih lanjut)
+ * Download laporan ke format CSV (Excel-compatible)
+ * @param {string} periode - Periode laporan: harian, mingguan, bulanan, tahunan
  */
 function downloadLaporan(periode) {
     // Get current filters
@@ -180,11 +309,8 @@ function downloadLaporan(periode) {
     if (bulan) params.set('bulan', bulan);
     if (tahun) params.set('tahun', tahun);
     
-    // For now, just alert (implementation will be added later)
-    alert('Fitur download akan segera tersedia. Format: PDF/Excel untuk periode ' + periode);
-    
-    // TODO: Implement actual download functionality
-    // window.location.href = '?' + params.toString();
+    // Trigger download
+    window.location.href = '?' + params.toString();
 }
 
 // Expose functions to global scope

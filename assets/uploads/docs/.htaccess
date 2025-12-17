@@ -6,11 +6,28 @@
     Deny from all
 </FilesMatch>
 
-# Allow access to PDF files only
-<FilesMatch "\.(pdf)$">
-    Order Allow,Deny
-    Allow from all
-</FilesMatch>
+# Allow PDF and block executable scripts (compatible with Apache 2.4+ and 2.2)
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.pdf$">
+        Require all granted
+    </FilesMatch>
+
+    <FilesMatch "\.(php|phtml|php[0-9]|phps|cgi|pl|py|jsp|asp|sh|shtml)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.pdf$">
+        Order allow,deny
+        Allow from all
+    </FilesMatch>
+
+    <FilesMatch "\.(php|phtml|php[0-9]|phps|cgi|pl|py|jsp|asp|sh|shtml)$">
+        Order allow,deny
+        Deny from all
+    </FilesMatch>
+</IfModule>
 
 # Disable directory listing
 Options -Indexes

@@ -1,0 +1,11 @@
+{
+	"servers": {
+		"com.figma.mcp/mcp": {
+			"type": "http",
+			"url": "http://127.0.0.1:3845/mcp",
+			"gallery": "https://api.mcp.github.com",
+			"version": "1.0.3"
+		}
+	},
+	"inputs": []
+}

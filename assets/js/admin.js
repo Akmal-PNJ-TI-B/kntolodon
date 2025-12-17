@@ -1,3 +1,115 @@
+/**
+ * ============================================================================
+ * ADMIN.JS - Admin Dashboard Scripts
+ * ============================================================================
+ * 
+ * Module untuk menangani admin-specific functionality:
+ * - Booking External form toggle (card ↔ form view)
+ * - Tab switching (Mendatang vs Histori untuk booking external)
+ * - Tab switching untuk Laporan page
+ * 
+ * FUNGSI UTAMA:
+ * 1. BOOKING EXTERNAL FORM TOGGLE
+ *    - toggleForm(show): Switch between card view dan form view
+ *    - Card view: Empty state dengan "Buat Booking" button
+ *    - Form view: Full booking form dengan input fields
+ * 
+ * 2. TAB SWITCHING (BOOKING EXTERNAL)
+ *    - switchTab(tabName): Toggle between 'upcoming' dan 'history'
+ *    - Updates button styles (active-tab vs inactive-tab classes)
+ *    - Shows/hides corresponding content containers
+ * 
+ * 3. TAB SWITCHING (LAPORAN)
+ *    - gantiTabLaporan(tabName): Switch between report period tabs
+ *    - Hides all tab contents
+ *    - Shows selected tab content
+ *    - Updates button styles dengan border-bottom highlight
+ * 
+ * TARGET ELEMENTS (BOOKING EXTERNAL):
+ * - #booking-card: Card view dengan "Buat Booking" CTA
+ * - #booking-form: Form view dengan input fields
+ * - [data-toggle-form="false"]: Kembali button (form → card)
+ * - #btn-upcoming: Mendatang tab button
+ * - #btn-history: History tab button
+ * - #tab-upcoming: Upcoming bookings content
+ * - #tab-history: Historical bookings content
+ * 
+ * TARGET ELEMENTS (LAPORAN):
+ * - .tab-btn: Report tab buttons
+ * - .tab-content: Report content containers
+ * - #content-{tabName}: Specific tab content (harian, mingguan, bulanan, tahunan)
+ * 
+ * DATA INITIALIZATION:
+ * - Reads ASSET_BASE_PATH from data attributes
+ * - Supports multiple data containers (#booking-external-data, #profile-data)
+ * - Sets window.ASSET_BASE_PATH for global access
+ * 
+ * USAGE:
+ * - Included in: view/admin/booking_external.php, view/admin/laporan.php
+ * - Initializes on DOM ready
+ * - Event listeners attached via initAdminPage()
+ * 
+ * CSS CLASSES:
+ * - active-tab: Active tab styling (colored, highlighted)
+ * - inactive-tab: Inactive tab styling (muted)
+ * - hidden: Display none
+ * 
+ * @module admin
+ * @version 1.0
+ * @author PBL-Perpustakaan Team
+ */
+
+// ==================== DATA INITIALIZATION ====================
+
+/**
+ * Initialize global variables from data attributes
+ * 
+ * Reads ASSET_BASE_PATH dari hidden div dengan data attributes.
+ * Supports multiple container IDs untuk reusability across admin pages.
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const dataContainer = document.getElementById('booking-external-data') || document.getElementById('profile-data');
+    if (dataContainer) {
+        window.ASSET_BASE_PATH = dataContainer.dataset.basePath || '';
+    }
+    
+    initAdminPage();
+});
+
+function initAdminPage() {
+    // Setup event listeners for booking external form toggle
+    const bookingCard = document.getElementById('booking-card');
+    if (bookingCard) {
+        bookingCard.addEventListener('click', function() {
+            toggleForm(true);
+        });
+    }
+    
+    const btnKembali = document.querySelector('[data-toggle-form="false"]');
+    if (btnKembali) {
+        btnKembali.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleForm(false);
+        });
+    }
+    
+    // Setup tab switching buttons
+    const btnUpcoming = document.getElementById('btn-upcoming');
+    const btnHistory = document.getElementById('btn-history');
+    
+    if (btnUpcoming) {
+        btnUpcoming.addEventListener('click', function() {
+            switchTab('upcoming');
+        });
+    }
+    
+    if (btnHistory) {
+        btnHistory.addEventListener('click', function() {
+            switchTab('history');
+        });
+    }
+}
+
 //#region Tab Switching (booking external)
 // Fungsi untuk Mengganti Tab
 function switchTab(tabName) {
