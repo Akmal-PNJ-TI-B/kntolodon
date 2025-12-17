@@ -566,6 +566,26 @@ document.addEventListener('DOMContentLoaded', function() {
             loadMemberData(currentTab, 1);
         });
     }
+
+    // Submit form when pressing Enter in search inputs (reliable across browsers)
+    const searchNama = document.getElementById('search-nama');
+    const searchNomorInduk = document.getElementById('search-nomor-induk');
+    if (filterForm && searchNama) {
+        searchNama.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filterForm.submit();
+            }
+        });
+    }
+    if (filterForm && searchNomorInduk) {
+        searchNomorInduk.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                filterForm.submit();
+            }
+        });
+    }
     
     // Add modal button
     const btnAdd = document.querySelector('[data-modal-action="add"]');

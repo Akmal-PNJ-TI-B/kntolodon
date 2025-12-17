@@ -362,6 +362,11 @@ require __DIR__ . '/../components/head.php';
                         </div>
                     </div>
 
+                        <!-- Submit Button (explicit) -->
+                    <div class="w-full md:w-auto flex justify-end">
+                        <button type="submit" class="bg-white text-sky-600 px-4 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors">Cari</button>
+                    </div>
+
                 </div>
             </form>
 
